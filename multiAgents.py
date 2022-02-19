@@ -74,6 +74,15 @@ class ReflexAgent(Agent):
         newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
 
         "*** YOUR CODE HERE ***"
+
+        # 1st priority: Ghost Location (Distance to ghost) more important than food location
+        
+        
+        # 2nd priority: Food Location (Distance to food)
+
+        
+
+
         return successorGameState.getScore()
 
 def scoreEvaluationFunction(currentGameState):
