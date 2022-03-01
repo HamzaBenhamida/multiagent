@@ -176,13 +176,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
         """
         "*** YOUR CODE HERE ***"
 
-        # iterable = [i for i in range(0,gameState.getNumAgents())]
-        # agents = cycle(iterable)
-        
-        # r = self.value(gameState, agentIndex=0, depth=self.depth)[1]
-        if self.depth == 3 or self.depth ==4:
-            print('Initial Depth:', self.depth)
-        r = self.minimax(gameState, agentIndex=0, depth=0)[1]
+        r = self.minimax(gameState, agentIndex=0, depth=self.depth)[1]
         
         return r
 
@@ -241,13 +235,14 @@ class MinimaxAgent(MultiAgentSearchAgent):
     def minimax(self, state, agentIndex, depth):
         
         # If game is finished
-        if depth == self.depth or state.isWin() or state.isLose():
+        if depth == 0 or state.isWin() or state.isLose():
             return  self.evaluationFunction(state), Directions.STOP
         
         # Pacman's turn
         if agentIndex == 0:
             if agentIndex == state.getNumAgents() - 1:
-                next_agentMax, depth = 0, depth + 1
+                next_agentMax = 0
+                depth -= 1
             else:
                 next_agentMax = agentIndex + 1
             
@@ -268,7 +263,8 @@ class MinimaxAgent(MultiAgentSearchAgent):
         # Gohsts` turn 
         else:
             if agentIndex == state.getNumAgents() - 1:
-                next_agentMin, depth = 0, depth + 1
+                next_agentMin = 0
+                depth -= 1
             else:
                 next_agentMin = agentIndex + 1
             
@@ -280,7 +276,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
                 child = state.generateSuccessor(agentIndex, action)
                 eval = self.minimax(child, next_agentMin, depth)[0]
                 #print(eval)
-                if eval > min_eval:
+                if eval < min_eval:
                     min_eval, best_action_min = eval,action
                 #print(min_eval)
 
@@ -299,56 +295,111 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         """
         "*** YOUR CODE HERE ***"
         
-        r = self.value(gameState, 0, self.depth, -1e9, 1e9)
+        r = self.alphaBeta(gameState, 0, self.depth, -1e9, 1e9)[1]
 
         return r
 
-
-    def value(self, state, agentIndex, depth, alpha, beta):
-        if agentIndex >= state.getNumAgents():
-            agentIndex = 0
-
+    def alphaBeta(self, state, agentIndex, depth, alpha, beta):
+        
         # If game is finished
         if depth == 0 or state.isWin() or state.isLose():
-            return self.evaluationFunction(state)
+            return  self.evaluationFunction(state), Directions.STOP
         
         # Pacman's turn
         if agentIndex == 0:
-            return self.max_value(state, agentIndex, depth, alpha, beta)
-        else: # Gohsts` turn 
-            return self.min_value(state, agentIndex, depth, alpha, beta)
+            if agentIndex == state.getNumAgents() - 1:
+                next_agentMax = 0
+                depth -= 1
+            else:
+                next_agentMax = agentIndex + 1
+            
+            max_eval = float("-inf")
+            best_action_max = Directions.STOP
+            legalActions = state.getLegalActions(agentIndex)
+
+            for action in legalActions:
+                child = state.generateSuccessor(agentIndex, action)
+                eval = self.alphaBeta(child, next_agentMax, depth, alpha, beta)[0]
+                if eval > max_eval:
+                    max_eval, best_action_max = eval, action
+        
+                alpha = max(alpha, eval)
+                if beta < alpha:
+                    break
+                
+        
+            return max_eval, best_action_max
+        
+        # Gohsts` turn 
+        else:
+            if agentIndex == state.getNumAgents() - 1:
+                next_agentMin = 0
+                depth -= 1
+            else:
+                next_agentMin = agentIndex + 1
+            
+            min_eval = float("inf")
+            best_action_min = Directions.STOP
+            legalActions = state.getLegalActions(agentIndex)
+
+            for action in legalActions:
+                child = state.generateSuccessor(agentIndex, action)
+                eval = self.alphaBeta(child, next_agentMin, depth, alpha, beta)[0]
+                if eval < min_eval:
+                    min_eval, best_action_min = eval, action
+                
+                beta = min(beta, eval)
+                if beta < alpha:
+                    break
+                
+                
+            return min_eval, best_action_min
+
+    # def value(self, state, agentIndex, depth, alpha, beta):
+    #     if agentIndex >= state.getNumAgents():
+    #         agentIndex = 0
+
+    #     # If game is finished
+    #     if depth == 0 or state.isWin() or state.isLose():
+    #         return self.evaluationFunction(state)
+        
+    #     # Pacman's turn
+    #     if agentIndex == 0:
+    #         return self.max_value(state, agentIndex, depth, alpha, beta)
+    #     else: # Gohsts` turn 
+    #         return self.min_value(state, agentIndex, depth, alpha, beta)
 
 
-    def max_value(self, state, agentIndex, depth, alpha, beta):
-        depth -= 1
-        evalScore = float("-inf")
-        legalActions = state.getLegalActions(agentIndex)
+    # def max_value(self, state, agentIndex, depth, alpha, beta):
+    #     depth -= 1
+    #     evalScore = float("-inf")
+    #     legalActions = state.getLegalActions(agentIndex)
 
-        for action in legalActions:
-            child = state.generateSuccessor(agentIndex, action)
-            eval = self.value(child, agentIndex+1, depth, alpha, beta)
-            evalScore = max(evalScore,eval)
-            alpha = max(alpha, eval)
-            if beta <= alpha:
-                break
+    #     for action in legalActions:
+    #         child = state.generateSuccessor(agentIndex, action)
+    #         eval = self.value(child, agentIndex+1, depth, alpha, beta)
+    #         evalScore = max(evalScore,eval)
+    #         alpha = max(alpha, eval)
+    #         if beta <= alpha:
+    #             break
 
-        return evalScore
+    #     return evalScore
 
 
-    def min_value(self, state, agentIndex, depth, alpha, beta):
-        depth -= 1
-        evalScore = float("inf")
-        legalActions = state.getLegalActions(agentIndex)
+    # def min_value(self, state, agentIndex, depth, alpha, beta):
+    #     depth -= 1
+    #     evalScore = float("inf")
+    #     legalActions = state.getLegalActions(agentIndex)
 
-        for action in legalActions:
-            child = state.generateSuccessor(agentIndex, action)
-            eval = self.value(child, agentIndex+1, depth, alpha, beta)
-            evalScore = min(evalScore, eval)
-            beta = min(beta, eval)
-            if beta <= alpha:
-                break
+    #     for action in legalActions:
+    #         child = state.generateSuccessor(agentIndex, action)
+    #         eval = self.value(child, agentIndex+1, depth, alpha, beta)
+    #         evalScore = min(evalScore, eval)
+    #         beta = min(beta, eval)
+    #         if beta <= alpha:
+    #             break
 
-        return evalScore
+    #     return evalScore
 
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
@@ -364,55 +415,97 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         legal moves.
         """
         "*** YOUR CODE HERE ***"
-        r = self.value(gameState, agentIndex=0, depth=self.depth)
+        r = self.expectimax(gameState, agentIndex=0, depth=self.depth)[1]
 
         return r
 
-
-    def value(self, state, agentIndex, depth):
-        if agentIndex >= state.getNumAgents():
-            agentIndex = 0
+    def expectimax(self, state, agentIndex, depth):
         
         # If game is finished
         if depth == 0 or state.isWin() or state.isLose():
-            return self.evaluationFunction(state),  Directions.STOP
+            return  self.evaluationFunction(state), Directions.STOP
         
         # Pacman's turn
         if agentIndex == 0:
-            return self.max_value(state, agentIndex, depth)
-        else: # Gohsts` turn 
-            return self.min_value(state, agentIndex, depth)
+            if agentIndex == state.getNumAgents() - 1:
+                next_agentMax, depth  = 0, depth - 1
+            else:
+                next_agentMax = agentIndex + 1
+            
+            max_eval = float("-inf")
+            best_action_max = Directions.STOP
+            legalActions = state.getLegalActions(agentIndex)
+
+            for action in legalActions:
+                child = state.generateSuccessor(agentIndex, action)
+                eval = self.expectimax(child, next_agentMax, depth)[0]
+                if eval > max_eval:
+                    max_eval, best_action_max = eval, action
+
+            return max_eval, best_action_max
+        
+        # Gohsts` turn 
+        else:
+            if agentIndex == state.getNumAgents() - 1:
+                next_agentMin = 0
+                depth -= 1
+            else:
+                next_agentMin = agentIndex + 1
+            
+            eval = 0.0
+            legalActions = state.getLegalActions(agentIndex)
+            prob =  1.0 / float(len(legalActions))
+            
+            for action in legalActions:
+                child = state.generateSuccessor(agentIndex, action)
+                eval += prob * self.expectimax(child, next_agentMin, depth)[0]
+    
+            return eval, Directions.STOP
+
+    # def value(self, state, agentIndex, depth):
+    #     if agentIndex >= state.getNumAgents():
+    #         agentIndex = 0
+        
+    #     # If game is finished
+    #     if depth == 0 or state.isWin() or state.isLose():
+    #         return self.evaluationFunction(state),  Directions.STOP
+        
+    #     # Pacman's turn
+    #     if agentIndex == 0:
+    #         return self.max_value(state, agentIndex, depth)
+    #     else: # Gohsts` turn 
+    #         return self.min_value(state, agentIndex, depth)
 
 
-    def max_value(self, state, agentIndex, depth):
-        depth -= 1
-        evalScore = float("-inf")
-        legalActions = state.getLegalActions(agentIndex)
+    # def max_value(self, state, agentIndex, depth):
+    #     depth -= 1
+    #     evalScore = float("-inf")
+    #     legalActions = state.getLegalActions(agentIndex)
 
-        for action in legalActions:
-            child = state.generateSuccessor(agentIndex, action)
-            eval = self.value(child, agentIndex+ 1, depth)
-            if type(eval) is tuple:
-                eval = eval[0]
-            evalScore = max(evalScore,eval)
+    #     for action in legalActions:
+    #         child = state.generateSuccessor(agentIndex, action)
+    #         eval = self.value(child, agentIndex+ 1, depth)
+    #         if type(eval) is tuple:
+    #             eval = eval[0]
+    #         evalScore = max(evalScore,eval)
 
-        return evalScore
+    #     return evalScore
 
 
-    def exp_value(self, state, agentIndex, depth):
-        depth -= 1
-        evalScore = float("inf")
-        legalActions = state.getLegalActions(agentIndex)
+    # def exp_value(self, state, agentIndex, depth):
+    #     depth -= 1
+    #     evalScore = float("inf")
+    #     legalActions = state.getLegalActions(agentIndex)
 
-        for action in legalActions:
-            child = state.generateSuccessor(agentIndex, action)
-            eval = self.value(child, agentIndex+ 1, depth)
-            if type(eval) is tuple:
-                eval = eval[0]
-            prob = self.expectimaxsearch(child,agentIndex, depth)
-            evalScore = min(evalScore, eval)
+    #     for action in legalActions:
+    #         child = state.generateSuccessor(agentIndex, action)
+    #         eval = self.value(child, agentIndex+ 1, depth)
+    #         if type(eval) is tuple:
+    #             eval = eval[0]
+    #         prob = self.expectimaxsearch(child,agentIndex, depth)
+    #         evalScore = min(evalScore, eval)
 
-        return evalScore
+    #     return evalScore
 
 def betterEvaluationFunction(currentGameState):
     """
@@ -422,7 +515,46 @@ def betterEvaluationFunction(currentGameState):
     DESCRIPTION: <write something here so we know what you did>
     """
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+
+    # Useful information you can extract from a GameState (pacman.py)
+    currGhostStates = currentGameState.getGhostStates()
+    currPos = currentGameState.getPacmanPosition()
+    currFood = currentGameState.getFood().asList() 
+    
+    if len(currFood) == 0:
+        closest_food = 0
+    else:
+        closest_food = min(manhattanDistance(currPos, food) for food in currFood)
+
+    closest_ghost = min(manhattanDistance(currPos, ghost.configuration.pos) for ghost in currGhostStates)
+    game_score = currentGameState.getScore()
+
+    
+
+    # if len(currFood) == 0:
+    #     currGame_closest_food = 1
+    # else:
+    #     currGame_closest_food = min(manhattanDistance(currPos, food) for food in currFood)
+               
+    #     # If distance from closest food is shorter for next state, take this action
+    # if nextGame_closest_food < currGame_closest_food:
+    #     closest_food = 50
+    # else:
+    #     closest_food = 0
+
+    
+    if closest_ghost > 5 and closest_food > 1:
+        closest_food += 50
+
+    # if ghost is far away move towards food
+    if closest_ghost > 5 and closest_food == 1:
+        closest_food += 100
+        
+    # # if ghost is close to pacman runaway from it (BEST REFLEXES I HAVE EVER SEEN TO DODGE GHOST)
+    if closest_ghost < 2:
+        closest_ghost -= 100
+
+    return closest_food + closest_ghost + game_score
 
 # Abbreviation
 better = betterEvaluationFunction
